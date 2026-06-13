@@ -16,7 +16,7 @@ mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 mlflow.set_experiment("production-ml-spring-2026")
 
 # === 2. Загрузка данных ===
-print("📥 Загрузка данных...")
+print("Загрузка данных...")
 train = pd.read_parquet("data/train.parquet.snappy")
 test = pd.read_parquet("data/test.parquet.snappy")
 
@@ -46,7 +46,7 @@ pipeline = Pipeline([
 ])
 
 # === 6. Обучение с логированием в MLflow ===
-print("🚀 Обучение модели...")
+print("Обучение модели...")
 with mlflow.start_run(run_name="rf_pipeline_200"):
     # Обучение
     pipeline.fit(X_tr, y_tr)
