@@ -1,0 +1,45 @@
+stages:
+  - check
+  - train
+  - build
+
+# 1. Проверяем, что окружение работает
+check_env:
+  stage: check
+  image: python:3.10
+  script:
+    - python --version
+    - echo "✅ Окружение Python готово"
+
+# 2. Запускаем обучение модели
+train_model:
+  stage: train
+  image: python:3.10
+  variables:
+    # Передаем твои реальные креды MinIO/MLflow, чтобы CI мог сохранить модель туда
+    MLFLOW_TRACKING_URI: "http://mlflow.v-efimov.tech:5000" # Или твой адрес MLflow
+    MLFLOW_S3_ENDPOINT_URL: "https://minio.v-efimov.tech"
+    AWS_ACCESS_KEY_ID: "CETxphWrKJ0GvMfLiO40"
+    AWS_SECRET_ACCESS_KEY: "8mmc564xmgqZy1aDny8VCtx8OjpnQBg49ghAZFUa"
+  script:
+    - echo "📦 Установка зависимостей..."
+    - pip install -r src/requirements.txt
+    - echo "🚀 Запуск обучения..."
+    - python src/train.py
+  artifacts:
+    paths:
+      - classification_metrics.json
+      - dataset_label_counts.json
+    expire_in: 1 week
+
+# 3. Проверяем, что Docker-образ для API собирается без ошибок
+build_api_image:
+  stage: build
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  script:
+    - echo "🐳 Сборка Docker-образа для API..."
+    - cd api
+    - docker build -t product-category-api:latest .
+    - echo "✅ Docker-образ успешно собран!"
