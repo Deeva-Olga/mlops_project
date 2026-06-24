@@ -72,17 +72,31 @@
 ## Структура проекта
 
 mlops_project/
+
 ├── src/
+
 │   ├── train.py              # Скрипт обучения модели
+
 │   └── predict.py            # Скрипт для batch-предсказаний
+
 ├── api/
+
 │   ├── main.py               # FastAPI приложение
+
 │   ├── requirements.txt      # Зависимости API
+
 │   └── Dockerfile            # Docker образ
+
 ├── data/
+
 │   ├── train.parquet.snappy  # Обучающие данные
+
 │   ├── test.parquet.snappy   # Тестовые данные
+
 │   └── tree.csv              # Иерархия категорий
+
 ├── run_service.sh            # Скрипт развёртывания
+
 ├── mlflow.db                 # MLflow база данных
+
 └── README.md                 # Документация
