@@ -3,11 +3,11 @@ import mlflow
 import mlflow.sklearn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List
+from typing import Dict, Optional, Any
 
 # === Настройки ===
-MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow:5000")
-RUN_ID = os.getenv("MLFLOW_RUN_ID", "YOUR_RUN_ID_HERE")
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "sqlite:////workspaces/mlops_project/mlflow.db")
+RUN_ID = os.getenv("MLFLOW_RUN_ID", "1121eea5d65248948720fce2a9eb3326")
 
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
@@ -21,11 +21,12 @@ print("✅ Модель загружена!")
 app = FastAPI(title="Product Category Prediction API", version="1.0.0")
 
 class ProductRequest(BaseModel):
-    text: str  # Текст товара (или JSON с полями name, description, etc.)
+    url: str
+    texts: Dict[str, Any]  # Вложенный JSON с текстовыми полями
+    image_url: Optional[str] = None
 
 class PredictionResponse(BaseModel):
     category_ind: int
-    confidence: float  # Опционально: уверенность модели
 
 @app.get("/")
 def root():
@@ -34,25 +35,36 @@ def root():
 @app.post("/predict", response_model=PredictionResponse)
 def predict(request: ProductRequest):
     try:
-        # Предсказание
-        prediction = model.predict([request.text])[0]
+        # Объединяем все текстовые поля в одну строку (как в train.py)
+        text_parts = []
+        for key, value in request.texts.items():
+            if value and str(value).strip():
+                text_parts.append(str(value))
         
-        # Опционально: получить уверенность (вероятности)
-        # probabilities = model.predict_proba([request.text])[0]
-        # confidence = float(max(probabilities))
+        # Если есть URL, добавляем его тоже
+        if request.url and request.url.strip():
+            text_parts.append(request.url)
+        
+        # Если есть image_url, добавляем его тоже
+        if request.image_url and request.image_url.strip():
+            text_parts.append(request.image_url)
+        
+        # Объединяем всё в одну строку через пробел
+        combined_text = " ".join(text_parts)
+        
+        # Если текст пустой, используем пустую строку
+        if not combined_text.strip():
+            combined_text = ""
+        
+        # Предсказание
+        prediction = model.predict([combined_text])[0]
         
         return PredictionResponse(
-            category_ind=int(prediction),
-            confidence=1.0  # Замените на реальную уверенность
+            category_ind=int(prediction)
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/predict_batch")
-def predict_batch(requests: List[ProductRequest]):
-    try:
-        texts = [r.text for r in requests]
-        predictions = model.predict(texts)
-        return {"predictions": [int(p) for p in predictions]}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@app.get("/health")
+def health():
+    return {"status": "healthy", "model_loaded": True}
