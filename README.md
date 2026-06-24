@@ -100,3 +100,8 @@ mlops_project/
 ├── mlflow.db                 # MLflow база данных
 
 └── README.md                 # Документация
+
+
+## Презентация
+https://docs.google.com/presentation/d/1Agi9-630prNYDQcPAzPnoeDjNGSDSBFS/edit?usp=sharing&ouid=108872823753120218896&rtpof=true&sd=true
+
